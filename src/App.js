@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const tempMovieData = [
   {
@@ -50,19 +50,59 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
+const KEY = "f84fc31d";
+
 export default function App() {
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  useEffect(() => {
+    async function fetchMovies() {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+        const response = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`Something went wrong while fetching movies`);
+        }
+
+        const data = await response.json();
+
+        if (data.Response === "False") {
+          throw new Error(`No movies found for ${query}`);
+        }
+
+        setMovies(data.Search);
+      } catch (error) {
+        setErrorMessage(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (query.length < 3) {
+      setMovies([]);
+      setErrorMessage("");
+      return;
+    }
+    fetchMovies();
+  }, [query]);
   return (
     <>
       <NavBar>
         <Logo />
-        <SearchMovies />
+        <SearchMovies query={query} setQuery={setQuery} />
         <MovieResultsSummary movies={movies} />
       </NavBar>
       <MovieDetailsSection>
         <MovieListBox>
-          <MovieList movies={movies} />
+          {isLoading && <Loader />}
+          {errorMessage && <ErrorMessage message={errorMessage} />}
+          {!isLoading && !errorMessage && <MovieList movies={movies} />}
         </MovieListBox>
         <MovieListBox>
           <WatchedMovieListSummary watched={watched} />
@@ -87,8 +127,7 @@ function Logo() {
     </div>
   );
 }
-function SearchMovies() {
-  const [query, setQuery] = useState("");
+function SearchMovies({ query, setQuery }) {
   return (
     <input
       className="search"
@@ -121,6 +160,21 @@ function MovieListBox({ children }) {
         {isOpen ? "–" : "+"}
       </button>
       {isOpen && children}
+    </div>
+  );
+}
+
+function Loader() {
+  return <div className="loader">Loading...</div>;
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <div className="error">
+      <span role="img" aria-label="error">
+        ⛔️
+      </span>
+      {message}
     </div>
   );
 }
