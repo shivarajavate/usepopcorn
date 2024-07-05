@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 const tempMovieData = [
   {
@@ -95,7 +95,7 @@ export default function App() {
     <>
       <NavBar>
         <Logo />
-        <SearchMovies query={query} setQuery={setQuery} />
+        <SearchBox query={query} setQuery={setQuery} />
         <MovieResultsSummary movies={movies} />
       </NavBar>
       <MovieDetailsSection>
@@ -127,7 +127,21 @@ function Logo() {
     </div>
   );
 }
-function SearchMovies({ query, setQuery }) {
+function SearchBox({ query, setQuery }) {
+  const inputElement = useRef(null);
+  useEffect(() => {
+    function handleKeydown(e) {
+      if (document.activeElement === inputElement.current) {
+        return;
+      }
+      if (e.code === "Enter") {
+        inputElement.current.focus();
+        setQuery("");
+      }
+    }
+    document.addEventListener("keydown", handleKeydown);
+    return () => document.removeEventListener("keydown", handleKeydown);
+  }, [setQuery]);
   return (
     <input
       className="search"
@@ -135,6 +149,7 @@ function SearchMovies({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputElement}
     />
   );
 }
