@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const tempWatchedData = [
+const tempWatchedMovieListData = [
   {
     imdbID: "tt1375666",
     Title: "Inception",
@@ -23,7 +23,10 @@ const tempWatchedData = [
   },
 ];
 
-export function useLocalStorageState(key, intialState = tempWatchedData) {
+export function useLocalStorageState(
+  key,
+  intialState = tempWatchedMovieListData
+) {
   const [value, setValue] = useState(() => {
     const storedValue = window.localStorage.getItem(key);
     if (storedValue && JSON.parse(storedValue).length) {
